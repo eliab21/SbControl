@@ -304,7 +304,7 @@ public class Sidebar {
     }
 
     String getEntity(int index) {
-        return ChatUtils.colorByOrdinal(index).toString();
+        return ChatUtils.colorByOrdinal(MAX_LINES - index).toString();
     }
 
     void sendObjectivePacket(PacketObjective.Mode mode) {}
