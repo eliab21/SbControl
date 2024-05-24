@@ -23,7 +23,9 @@ public class SbControl {
 
         if (Reflection.isRepackage()) {
 
-            if (Reflection.getOptionalNmsClass("network.chat.numbers", "NumberFormat").isPresent()) {
+            if (Reflection.getOptionalNmsClass("network.protocol", "PacketType").isPresent()) {
+                VERSION = Version.V1_20_5;
+            } else if (Reflection.getOptionalNmsClass("network.chat.numbers", "NumberFormat").isPresent()) {
                 VERSION = Version.V1_20_3;
             } else if (Reflection.getOptionalNmsClass("world.scores", "DisplaySlot").isPresent()) {
                 VERSION = Version.V1_20_2;

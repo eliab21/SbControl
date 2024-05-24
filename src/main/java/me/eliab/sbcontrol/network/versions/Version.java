@@ -12,7 +12,8 @@ public enum Version {
     V1_16(PacketManager_v1_13.class),
     V1_20(PacketManager_v1_13.class),
     V1_20_2(PacketManager_v1_20_2.class),
-    V1_20_3(PacketManager_v1_20_3.class);
+    V1_20_3(PacketManager_v1_20_3.class),
+    V1_20_5(PacketManager_v1_20_3.class);
 
     private final Class<? extends PacketManager> packetManagerClass;
 

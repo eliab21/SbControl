@@ -3,14 +3,14 @@
 </h1>
 
 SbControl is packet-based scoreboard API for Bukkit plugins, inspired on [ProtocolSidebar](https://github.com/CatCoderr/ProtocolSidebar)
-that supports 1.12 to 1.20.4. The purpose of this API is unleashed all the power of scoreboards, so you can use it however you want.
+that supports 1.12 to 1.20.6. The purpose of this API is unleashed all the power of scoreboards, so you can use it however you want.
 Either by using the scoreboard packets or with an already built-in scoreboard system. It also includes a simple and fast Sidebar
 system to display whatever you want to the player.
 
 ## Features
 
 - Create and send scoreboard packets
-- Supports all minecraft versions from 1.12 to 1.20.4
+- Supports all minecraft versions from 1.12 to 1.20.6
 - Very easy to use
 - Can be used asynchronously
 - Built-in scoreboard system
@@ -113,7 +113,7 @@ Add the repository and dependency to your pom.xml
     <dependency>
         <groupId>com.github.eliab21</groupId>
         <artifactId>sbcontrol</artifactId>
-        <version>1.0.1</version>
+        <version>1.2.0</version>
     </dependency>
 </dependencies>
 ```
@@ -127,7 +127,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.eliab21:sbcontrol:1.0.1'
+    implementation 'com.github.eliab21:sbcontrol:1.2.0'
 }
 ```
 

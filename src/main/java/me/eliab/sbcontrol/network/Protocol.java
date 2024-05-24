@@ -7,6 +7,12 @@ import me.eliab.sbcontrol.network.versions.Version;
 import me.eliab.sbcontrol.util.Reflection;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * The Protocol class facilitates the storage and retrieval of packet ids and their corresponding packet classes.
@@ -17,7 +23,7 @@ public class Protocol {
     private final Codec codec;
     private final BiMap<Integer, Class<? extends Packet>> packetIdMap = HashBiMap.create();
 
-    Protocol(Version version) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException {
+    Protocol(Version version) {
         codec = getCodec(version);
     }
 
@@ -160,7 +166,68 @@ public class Protocol {
 
     }
 
-    private static Codec getCodec(Version version) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException {
+    private static Codec getCodec(Version version) {
+        try {
+            return (version.isHigherOrEqualThan(Version.V1_20_5)) ? getCodec_v1_20_5() : getCodec_v1_20_4(version);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Protocol could not retrieve codec from version " + version);
+        }
+    }
+
+    private static Codec getCodec_v1_20_5() throws ReflectiveOperationException, IllegalAccessException {
+
+        Class<?> protocolInfoClass = Reflection.getNmsClass("network", "ProtocolInfo");
+        Class<?> protocolInfoUnboundClass = Reflection.getNmsClass("network", "ProtocolInfo$a");
+        Class<?> streamCodecClass = Reflection.getNmsClass("network.codec", "StreamCodec");
+        Class<?> idDispatchCodeClass = Reflection.getNmsClass("network.codec", "IdDispatchCodec");
+        Class<?> object2InputMapClass = Class.forName("it.unimi.dsi.fastutil.objects.Object2IntMap");
+
+        MethodHandle bindMethod = Reflection.findMethod(protocolInfoUnboundClass, protocolInfoClass, Function.class);
+        MethodHandle getCodecMethod = Reflection.findMethod(protocolInfoClass, streamCodecClass);
+        MethodHandle toIdField = Reflection.findFieldGetter(idDispatchCodeClass, object2InputMapClass);
+
+        Map<Type, Class<?>> packetTypes = new EnumMap<>(Type.class);
+        packetTypes.put(Type.HANDSHAKING, Reflection.getNmsClass("network.protocol.handshake", "HandshakePacketTypes"));
+        packetTypes.put(Type.PLAY, Reflection.getNmsClass("network.protocol.game", "GamePacketTypes"));
+        packetTypes.put(Type.STATUS, Reflection.getNmsClass("network.protocol.status", "StatusPacketTypes"));
+        packetTypes.put(Type.LOGIN, Reflection.getNmsClass("network.protocol.login", "LoginPacketTypes"));
+        packetTypes.put(Type.CONFIGURATION, Reflection.getNmsClass("network.protocol.configuration", "ConfigurationPacketTypes"));
+
+        Map<Type, Class<?>> protocols = new EnumMap<>(Type.class);
+        protocols.put(Type.HANDSHAKING, Reflection.getNmsClass("network.protocol.handshake", "HandshakeProtocols"));
+        protocols.put(Type.PLAY, Reflection.getNmsClass("network.protocol.game", "GameProtocols"));
+        protocols.put(Type.STATUS, Reflection.getNmsClass("network.protocol.status", "StatusProtocols"));
+        protocols.put(Type.LOGIN, Reflection.getNmsClass("network.protocol.login", "LoginProtocols"));
+        protocols.put(Type.CONFIGURATION, Reflection.getNmsClass("network.protocol.configuration", "ConfigurationProtocols"));
+
+        Function<?, ?> emptyFunction = input -> null;
+
+        return (type, direction, nmsClass) -> {
+
+            Object protocolInfo = protocols.get(type)
+                    .getFields()[direction.ordinal()]
+                    .get(null);
+
+            protocolInfo = bindMethod.invoke(protocolInfo, emptyFunction);
+            Object codec = getCodecMethod.invoke(protocolInfo);
+            Map<Object, Integer> packetIdMap = (Map<Object, Integer>) toIdField.invoke(codec);
+
+            Object packetType = Arrays.stream(packetTypes.get(type).getFields())
+                    .filter(field ->
+                            Modifier.isFinal(field.getModifiers()) &&
+                            Modifier.isStatic(field.getModifiers()) &&
+                            ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0] == nmsClass)
+                    .findFirst()
+                    .orElseThrow(NoSuchFieldException::new)
+                    .get(null);
+
+            return packetIdMap.get(packetType);
+
+        };
+
+    }
+
+    private static Codec getCodec_v1_20_4(Version version) throws ReflectiveOperationException {
 
         Class<?> enumProtocolClass = Reflection.getNmsClass("network", "EnumProtocol");
         Class<?> enumProtocolDirectionClass = Reflection.getNmsClass("network.protocol", "EnumProtocolDirection");
