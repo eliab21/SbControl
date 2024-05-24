@@ -10,7 +10,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 /**
  * Utility class for working with reflection, providing methods for obtaining classes,
@@ -87,16 +86,17 @@ public final class Reflection {
         return toMethodHandle(Arrays.stream(clazz.getDeclaredFields())
                 .filter(field -> field.getType() == fieldType)
                 .findFirst()
-                .orElseThrow(NoSuchFieldException::new));
+                .orElseThrow(() -> new NoSuchFieldException("Reflection could not find field in class " + clazz + " of type " + fieldType)));
 
     }
 
     public static MethodHandle findMethod(Class<?> clazz, Class<?> returnType, Class<?>... parameters) throws NoSuchMethodException, IllegalAccessException {
 
-        return toMethodHandle(Stream.of(clazz.getMethods())
+        return toMethodHandle(Arrays.stream(clazz.getMethods())
                 .filter(method -> method.getReturnType() == returnType && Arrays.equals(method.getParameterTypes(), parameters))
                 .findFirst()
-                .orElseThrow(NoSuchMethodException::new));
+                .orElseThrow(() -> new NoSuchMethodException(
+                        "Reflection could not find method in class " + clazz + " with return type " + returnType + "and with parameters " + parameters)));
 
     }
 
@@ -144,7 +144,7 @@ public final class Reflection {
                         field.setAccessible(true);
                         theUnsafe = field.get(null);
                     } catch (ReflectiveOperationException e) {
-                        throw new RuntimeException(e);
+                        throw new RuntimeException("Reflection could not get theUnsafe field", e);
                     }
 
                 }
