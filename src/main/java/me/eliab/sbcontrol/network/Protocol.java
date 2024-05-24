@@ -9,29 +9,29 @@ import me.eliab.sbcontrol.util.Reflection;
 import java.lang.invoke.MethodHandle;
 
 /**
- * The Protocol class facilitates the storage and retrieval of packet IDs and their corresponding packet classes.
- * It offers the flexibility to either manually assign packet IDs or automatically retrieve them from minecraft packet classes.
+ * The Protocol class facilitates the storage and retrieval of packet ids and their corresponding packet classes.
+ * It offers the flexibility to either manually assign packet ids or automatically retrieve them from minecraft packet classes.
  */
 public class Protocol {
 
     private final Codec codec;
-    private final BiMap<Integer, Class<? extends Packet>> packets = HashBiMap.create();
+    private final BiMap<Integer, Class<? extends Packet>> packetIdMap = HashBiMap.create();
 
     Protocol(Version version) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException {
         codec = getCodec(version);
     }
 
     /**
-     * Sets the packet ID of a minecraft packet class to a given packet class.
+     * Sets the packet id of a minecraft packet class to a given packet class.
      *
      * @param type           The protocol type of the minecraft packet.
      * @param direction      The direction of minecraft the packet.
      * @param nmsPacketClass The minecraft packet class to retrieve the id from.
      * @param packetClass    The packet class to set the id to.
      */
-    public void setPacketID(Type type, Direction direction, Class<?> nmsPacketClass, Class<? extends Packet> packetClass) {
+    public void setPacketId(Type type, Direction direction, Class<?> nmsPacketClass, Class<? extends Packet> packetClass) {
         try {
-            int id = codec.getNmsPacketID(type, direction, nmsPacketClass);
+            int id = codec.getNmsPacketId(type, direction, nmsPacketClass);
             registerPacket(id, packetClass);
         } catch (Throwable e) {
             throw new RuntimeException("Protocol could not retrieve id of minecraft packet class: '" + nmsPacketClass + "'", e);
@@ -39,39 +39,39 @@ public class Protocol {
     }
 
     /**
-     * Registers a packet with its corresponding ID.
+     * Registers a packet with its corresponding id.
      *
-     * @param id          The packet ID.
+     * @param id          The packet id.
      * @param packetClass The packet class.
      */
     public void registerPacket(int id, Class<? extends Packet> packetClass) {
-        Preconditions.checkArgument(packets.putIfAbsent(id, packetClass) == null,
+        Preconditions.checkArgument(packetIdMap.putIfAbsent(id, packetClass) == null,
                 "Protocol has already registered a packet with the same id: '" + id + "'");
     }
 
     /**
-     * Retrieves the packet ID for the given packet class.
+     * Retrieves the packet id for the given packet class.
      *
-     * @param packetClass The packet class from which to retrieve the packet ID.
-     * @return The corresponding packet ID.
-     * @throws IllegalArgumentException If the packet ID for the specified packet class is not registered.
+     * @param packetClass The packet class from which to retrieve the packet id.
+     * @return The corresponding packet id.
+     * @throws IllegalArgumentException If the packet id for the specified packet class is not registered.
      */
-    public int getPacketID(Class<? extends Packet> packetClass) {
-        Integer id = packets.inverse().get(packetClass);
+    public int getPacketId(Class<? extends Packet> packetClass) {
+        Integer id = packetIdMap.inverse().get(packetClass);
         Preconditions.checkArgument(id != null,
                 "Protocol has not registered an id for packet: '" + packetClass + "'");
         return id;
     }
 
     /**
-     * Retrieves the packet class for the given packet ID.
+     * Retrieves the packet class for the given packet id.
      *
-     * @param id The packet ID for which to retrieve the packet class.
+     * @param id The packet id for which to retrieve the packet class.
      * @return The corresponding packet class.
-     * @throws IllegalArgumentException If no packet class is registered with the specified ID.
+     * @throws IllegalArgumentException If no packet class is registered with the specified id.
      */
     public Class<? extends Packet> getPacketClass(int id) {
-        Class<? extends Packet> packetClass = packets.get(id);
+        Class<? extends Packet> packetClass = packetIdMap.get(id);
         Preconditions.checkArgument(packetClass != null,
                 "Protocol has not registered a packet class with id: " + id);
         return packetClass;
@@ -85,7 +85,7 @@ public class Protocol {
      * @return The PacketSerializer instance given with all the packet's data.
      */
     public PacketSerializer serialize(Packet packet, PacketSerializer packetSerializer) {
-        packetSerializer.writeByte(getPacketID(packet.getClass()));
+        packetSerializer.writeByte(getPacketId(packet.getClass()));
         packet.write(packetSerializer);
         return packetSerializer;
     }
@@ -142,21 +142,21 @@ public class Protocol {
     }
 
     /**
-     * The Codec interface defines the method, depending on the version, for retrieving minecraft packet IDs
+     * The Codec interface defines the method, depending on the version, for retrieving minecraft packet ids
      * based on protocol type, direction, and the corresponding NMS packet class.
      */
     public interface Codec {
 
         /**
-         * Retrieves the NMS packet ID for a specific packet type, protocol direction, and NMS packet class.
+         * Retrieves the NMS packet id for a specific packet type, protocol direction, and NMS packet class.
          *
          * @param type      The protocol type of the packet.
          * @param direction The direction of the packet (serverbound or clientbound).
          * @param nmsClass  The NMS packet class associated with the packet.
-         * @return The NMS packet ID.
+         * @return The NMS packet id.
          * @throws Throwable If an error occurs during the retrieval process.
          */
-        int getNmsPacketID(Protocol.Type type, Protocol.Direction direction, Class<?> nmsClass) throws Throwable;
+        int getNmsPacketId(Protocol.Type type, Protocol.Direction direction, Class<?> nmsClass) throws Throwable;
 
     }
 
@@ -174,7 +174,7 @@ public class Protocol {
             Class<?> codecClass = enumProtocolClass.getDeclaredClasses()[1];
 
             MethodHandle getCodecMethod = Reflection.findMethod(enumProtocolClass, codecClass, enumProtocolDirectionClass);
-            MethodHandle getPacketIDMethod = Reflection.findMethod(codecClass, int.class, packetClass);
+            MethodHandle getPacketIdMethod = Reflection.findMethod(codecClass, int.class, packetClass);
 
             return (type, direction, nmsClass) -> {
 
@@ -182,21 +182,21 @@ public class Protocol {
                 Enum<?> protocolDirection = protocolDirectionEnum[direction.ordinal()];
                 Object codec = getCodecMethod.invoke(protocol, protocolDirection);
 
-                return (int) getPacketIDMethod.invoke(codec, Reflection.createInstance(nmsClass));
+                return (int) getPacketIdMethod.invoke(codec, Reflection.createInstance(nmsClass));
 
             };
 
         } else {
 
             Class<?> returnType = (version == Version.V1_20) ? int.class : Integer.class;
-            MethodHandle getPacketIDMethod = Reflection.findMethod(enumProtocolClass, returnType, enumProtocolDirectionClass, packetClass);
+            MethodHandle getPacketIdMethod = Reflection.findMethod(enumProtocolClass, returnType, enumProtocolDirectionClass, packetClass);
 
             return (type, direction, nmsClass) -> {
 
                 Enum<?> protocol = protocolEnum[type.ordinal()];
                 Enum<?> protocolDirection = protocolDirectionEnum[direction.ordinal()];
 
-                return (int) getPacketIDMethod.invoke(protocol, protocolDirection, Reflection.createInstance(nmsClass));
+                return (int) getPacketIdMethod.invoke(protocol, protocolDirection, Reflection.createInstance(nmsClass));
 
             };
 

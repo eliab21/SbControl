@@ -75,14 +75,14 @@ public abstract class PacketManager {
         Class<?> packetTeamClass = Reflection.getNmsClass(protocolPackage, "PacketPlayOutScoreboardTeam");
         Class<?> packetScoreClass = Reflection.getNmsClass(protocolPackage, "PacketPlayOutScoreboardScore");
 
-        protocol.setPacketID(Protocol.Type.PLAY, Protocol.Direction.CLIENTBOUND, packetDisplayObjectiveClass, createPacketDisplayObjective().getClass());
-        protocol.setPacketID(Protocol.Type.PLAY, Protocol.Direction.CLIENTBOUND, packetObjectiveClass, createPacketObjective().getClass());
-        protocol.setPacketID(Protocol.Type.PLAY, Protocol.Direction.CLIENTBOUND, packetTeamClass, createPacketTeam().getClass());
-        protocol.setPacketID(Protocol.Type.PLAY, Protocol.Direction.CLIENTBOUND, packetScoreClass, createPacketScore().getClass());
+        protocol.setPacketId(Protocol.Type.PLAY, Protocol.Direction.CLIENTBOUND, packetDisplayObjectiveClass, createPacketDisplayObjective().getClass());
+        protocol.setPacketId(Protocol.Type.PLAY, Protocol.Direction.CLIENTBOUND, packetObjectiveClass, createPacketObjective().getClass());
+        protocol.setPacketId(Protocol.Type.PLAY, Protocol.Direction.CLIENTBOUND, packetTeamClass, createPacketTeam().getClass());
+        protocol.setPacketId(Protocol.Type.PLAY, Protocol.Direction.CLIENTBOUND, packetScoreClass, createPacketScore().getClass());
 
         if (version.isHigherOrEqualThan(Version.V1_20_3)) {
             Class<?> packetResetScoreClass = Reflection.getNmsClass(protocolPackage, "ClientboundResetScorePacket");
-            protocol.setPacketID(Protocol.Type.PLAY, Protocol.Direction.CLIENTBOUND, packetResetScoreClass, createPacketResetScore().getClass());
+            protocol.setPacketId(Protocol.Type.PLAY, Protocol.Direction.CLIENTBOUND, packetResetScoreClass, createPacketResetScore().getClass());
         }
 
     }
