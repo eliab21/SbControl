@@ -113,7 +113,7 @@ Add the repository and dependency to your pom.xml
     <dependency>
         <groupId>com.github.eliab21</groupId>
         <artifactId>sbcontrol</artifactId>
-        <version>1.2.0</version>
+        <version>1.2.1</version>
     </dependency>
 </dependencies>
 ```
@@ -127,7 +127,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.eliab21:sbcontrol:1.2.0'
+    implementation 'com.github.eliab21:sbcontrol:1.2.1'
 }
 ```
 

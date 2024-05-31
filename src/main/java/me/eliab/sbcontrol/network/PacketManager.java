@@ -114,17 +114,13 @@ public abstract class PacketManager {
      *
      * @param channel The channel to which packets will be sent.
      * @param packets The packets to be sent.
-     * @throws IllegalArgumentException If the channel is null or closed.
+     * @throws IllegalArgumentException If the channel is null.
      */
     public void sendPacket(Channel channel, Packet... packets) {
-
         Preconditions.checkArgument(channel != null, "PacketManager cannot send packet to null channel");
-        Preconditions.checkArgument(channel.isOpen(), "PacketManager cannot send packet to closed channel");
-
         for (Packet packet : packets) {
             channel.writeAndFlush( protocol.serialize(packet, createPacketSerializer()).getHandle() );
         }
-
     }
 
     /**
